@@ -55,20 +55,25 @@ mergeuse() {
 	mode=`echo $flag | egrep -o '^-?'`
 	flag=`echo $flag | sed "s/^$mode//"`
 
+	if [ ! -r $makeconf ]
+	then
+		touch $makeconf
+	fi
+
 	if ! egrep '^USE=' $makeconf
 	then
 		echo "USE=\"\"" >>$makeconf
 	fi
 
-	oldusefull=`emerge --info | egrep -o "^USE=(\"|')[^[:cntrl:]]*(\"|')"`
+	oldusefull=`tr -d '\\' <$makeconf | tr '\n' ' ' | sed -E 's/[[:space:]]{2,}/ /' | egrep -o "^USE=(\"|')[^[:cntrl:]]*(\"|')"`
 	olduse=`echo $oldusefull | sed "s/^USE=//;s/'//g;s/\"//g"`
-	match=`echo "$olduse" | egrep -o "(^|[[:space:]])(-|+)?$flag([[:space:]]|$)"`
+	match=`echo "$olduse" | egrep -o "(^|[[:space:]])(-|+)?$flag([[:space:]]|\$)"`
 
 	if [ -z "$match" ]
 	then
 		newuse="$olduse $mode$flag"
 	else
-		newuse=`echo $olduse | sed "s/$match/$mode$flag/`
+		newuse=`echo $olduse | sed "s/$match/$mode$flag/"`
 	fi
 
 	newusefull="USE=\"$newuse\""
